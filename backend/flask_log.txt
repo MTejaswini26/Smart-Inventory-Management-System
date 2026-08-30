@@ -1,0 +1,74 @@
+======================================
+Smart Inventory Flask Backend Started
+Server running on http://localhost:5001
+======================================
+ * Serving Flask app 'app'
+ * Debug mode: on
+======================================
+Smart Inventory Flask Backend Started
+Server running on http://localhost:5001
+======================================
+======================================
+Smart Inventory Flask Backend Started
+Server running on http://localhost:5001
+======================================
+======================================
+Smart Inventory Flask Backend Started
+Server running on http://localhost:5001
+======================================
+======================================
+Smart Inventory Flask Backend Started
+Server running on http://localhost:5001
+======================================
+======================================
+Smart Inventory Flask Backend Started
+Server running on http://localhost:5001
+======================================
+======================================
+Smart Inventory Flask Backend Started
+Server running on http://localhost:5001
+======================================
+================================================================
+PASSWORD RESET REQUESTED for user 'admin'
+Reset token (valid for 15 minutes): iAxZ9_rg3xNAng5AdAl6NCV4bweFoiHsjyflHhCkHnU
+================================================================
+================================================================
+PASSWORD RESET REQUESTED for user 'admin'
+Reset token (valid for 15 minutes): 8YmQR2R2NzaEpNQ0gBg6u1TPflH9slmdTozcPCCGIlU
+================================================================
+======================================
+Smart Inventory Flask Backend Started
+Server running on http://localhost:5001
+======================================
+======================================
+Smart Inventory Flask Backend Started
+Server running on http://localhost:5001
+======================================
+================================================================
+PASSWORD RESET REQUESTED for user 'admin'
+Reset token (valid for 15 minutes): PXGRZu5U9s7ifAeNVWsyHl_afRp74db_F8optvqbNSw
+================================================================
+================================================================
+PASSWORD RESET REQUESTED for user 'admin'
+Reset token (valid for 15 minutes): -AlCbJrF3VsbIAnPEpD8dfJmzUqYiBhlltlgXtsizDc
+================================================================
+======================================
+Smart Inventory Flask Backend Started
+Server running on http://localhost:5001
+======================================
+================================================================
+PASSWORD RESET REQUESTED for user 'admin'
+Reset token (valid for 15 minutes): gl21XjJ7ficpFjd3dRd2aMU0HAmWMXmb9R1WQjVvRyo
+================================================================
+======================================
+Smart Inventory Flask Backend Started
+Server running on http://localhost:5001
+======================================
+ * Serving Flask app 'app'
+ * Debug mode: on
+======================================
+Smart Inventory Flask Backend Started
+Server running on http://localhost:5001
+======================================
+ * Serving Flask app 'app'
+ * Debug mode: on

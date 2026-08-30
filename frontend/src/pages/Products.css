@@ -1,0 +1,645 @@
+/* =========================================================
+   SMART INVENTORY MANAGEMENT SYSTEM
+   PRODUCT MANAGEMENT - FINAL UI
+   ========================================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+/* =========================================================
+   PRODUCTS PAGE
+   ========================================================= */
+
+.products-page {
+  width: 100%;
+  min-height: 100vh;
+
+  padding: 35px 38px 55px;
+
+  background: #f5f7fb;
+
+  font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+
+  color: #17254a;
+}
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.products-header {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 28px;
+}
+
+.products-header h1 {
+  margin: 0;
+
+  color: #10234b;
+
+  font-size: 27px;
+  font-weight: 700;
+
+  line-height: 1.2;
+}
+
+.products-header p {
+  margin: 7px 0 0;
+
+  color: #68758d;
+
+  font-size: 14px;
+
+  line-height: 1.4;
+}
+
+/* =========================================================
+   ADD PRODUCT BUTTON
+   ========================================================= */
+
+.add-product-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 42px;
+
+  padding: 11px 19px;
+
+  border: none;
+  border-radius: 8px;
+
+  background: #1769e8;
+
+  color: #ffffff;
+
+  font-family: inherit;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  box-shadow: 0 4px 10px rgba(23, 105, 232, 0.18);
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.add-product-btn:hover {
+  background: #0d5bd1;
+
+  transform: translateY(-2px);
+
+  box-shadow: 0 7px 16px rgba(23, 105, 232, 0.22);
+}
+
+.add-product-btn:active {
+  transform: translateY(0);
+}
+
+/* =========================================================
+   SEARCH
+   ========================================================= */
+
+.search-container {
+  width: 100%;
+
+  margin-bottom: 22px;
+}
+
+.search-container input {
+  width: 100%;
+  max-width: 430px;
+
+  height: 42px;
+
+  padding: 0 15px;
+
+  border: 1px solid #d7dee9;
+
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #344054;
+
+  font-family: inherit;
+
+  font-size: 14px;
+
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.search-container input::placeholder {
+  color: #98a2b3;
+}
+
+.search-container input:focus {
+  border-color: #1769e8;
+
+  box-shadow:
+    0 0 0 3px rgba(23, 105, 232, 0.10);
+}
+
+/* =========================================================
+   PRODUCT FORM
+   ========================================================= */
+
+.product-form-container {
+  width: 100%;
+
+  margin-bottom: 25px;
+
+  padding: 27px 28px;
+
+  background: #ffffff;
+
+  border: 1px solid #edf0f5;
+
+  border-radius: 14px;
+
+  box-shadow:
+    0 5px 18px rgba(0, 3, 7, 0.918);
+}
+
+.product-form-container h2 {
+  margin: 0 0 22px;
+
+  color: #17254a;
+
+  font-size: 20px;
+  font-weight: 700;
+}
+
+/* =========================================================
+   FORM GROUP
+   ========================================================= */
+
+.form-group {
+  margin-bottom: 17px;
+}
+
+.form-group label {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: #344054;
+
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.form-group input {
+  width: 100%;
+
+  min-height: 42px;
+
+  padding: 10px 13px;
+
+  border: 1px solid #d2d9e4;
+
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #344054;
+
+  font-family: inherit;
+
+  font-size: 14px;
+
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.form-group input::placeholder {
+  color: #9aa4b2;
+}
+
+.form-group input:focus {
+  border-color: #1769e8;
+
+  box-shadow:
+    0 0 0 3px rgba(23, 105, 232, 0.08);
+}
+
+/* =========================================================
+   FORM BUTTONS
+   ========================================================= */
+
+.form-buttons {
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  margin-top: 22px;
+}
+
+.save-product-btn,
+.cancel-btn {
+  min-height: 40px;
+
+  padding: 10px 19px;
+
+  border-radius: 8px;
+
+  font-family: inherit;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+/* SAVE */
+
+.save-product-btn {
+  border: none;
+
+  background: #1769e8;
+
+  color: #ffffff;
+}
+
+.save-product-btn:hover {
+  background: #0d5bd1;
+
+  transform: translateY(-1px);
+}
+
+/* CANCEL */
+
+.cancel-btn {
+  border: 1px solid #d5dbe5;
+
+  background: #f8fafc;
+
+  color: #475467;
+}
+
+.cancel-btn:hover {
+  background: #eef2f7;
+
+  border-color: #cbd3df;
+}
+
+/* =========================================================
+   PRODUCT TABLE CONTAINER
+   ========================================================= */
+
+.product-table-container {
+  width: 100%;
+
+  padding: 0;
+
+  overflow-x: auto;
+
+  background: #ffffff;
+
+  border: 1px solid #edf0f5;
+
+  border-radius: 14px;
+
+  box-shadow:
+    0 5px 18px rgba(31, 45, 61, 0.06);
+}
+
+/* =========================================================
+   PRODUCT TABLE
+   ========================================================= */
+
+.product-table-container table {
+  width: 100%;
+
+  min-width: 720px;
+
+  border-collapse: collapse;
+}
+
+/* =========================================================
+   TABLE HEADER + CELLS
+   ========================================================= */
+
+.product-table-container th,
+.product-table-container td {
+  padding: 15px 18px;
+
+  text-align: left;
+
+  border-bottom: 1px solid #edf0f5;
+}
+
+.product-table-container th {
+  background: #f8fafc;
+
+  color: #000207fa;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.45px;
+
+  white-space: nowrap;
+}
+
+.product-table-container td {
+  color: #131416;
+
+  font-size: 13px;
+
+  vertical-align: middle;
+}
+
+/* =========================================================
+   TABLE ROW
+   ========================================================= */
+
+.product-table-container tbody tr {
+  background: #ffffff;
+
+  transition: background 0.2s ease;
+}
+
+.product-table-container tbody tr:hover {
+  background: #f8fbff;
+}
+
+.product-table-container tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* =========================================================
+   ACTION BUTTONS
+   ========================================================= */
+
+.edit-btn,
+.delete-btn {
+  min-height: 32px;
+
+  padding: 7px 12px;
+
+  border: none;
+
+  border-radius: 7px;
+
+  font-family: inherit;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.edit-btn {
+  margin-right: 7px;
+
+  background: #eaf1ff;
+
+  color: #1769e8;
+}
+
+.edit-btn:hover {
+  background: #dce8ff;
+
+  transform: translateY(-1px);
+}
+
+.delete-btn {
+  background: #feecec;
+
+  color: #dc2626;
+}
+
+.delete-btn:hover {
+  background: #ffdede;
+
+  transform: translateY(-1px);
+}
+
+/* =========================================================
+   GENERAL BUTTON / INPUT
+   ========================================================= */
+
+button {
+  font-family: inherit;
+}
+
+input,
+textarea,
+select,
+button {
+  pointer-events: auto;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #1769e8;
+
+  outline-offset: 2px;
+}
+
+/* =========================================================
+   TABLE EMPTY STATE
+   ========================================================= */
+
+.product-table-container .empty-state {
+  padding: 45px 20px;
+
+  color: #98a2b3;
+
+  font-size: 13px;
+
+  text-align: center;
+}
+
+/* =========================================================
+   SCROLLBAR
+   ========================================================= */
+
+.product-table-container::-webkit-scrollbar {
+  height: 7px;
+}
+
+.product-table-container::-webkit-scrollbar-track {
+  background: #f5f7fb;
+}
+
+.product-table-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+
+  border-radius: 10px;
+}
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media (max-width: 1000px) {
+
+  .products-page {
+    padding: 30px 25px 45px;
+  }
+
+  .products-header h1 {
+    font-size: 25px;
+  }
+
+  .product-form-container {
+    padding: 24px;
+  }
+
+}
+
+/* =========================================================
+   SMALL TABLET
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+  .products-page {
+    padding: 25px 20px 40px;
+  }
+
+  .products-header {
+    align-items: flex-start;
+
+    gap: 18px;
+  }
+
+  .products-header h1 {
+    font-size: 23px;
+  }
+
+  .products-header p {
+    font-size: 13px;
+  }
+
+  .add-product-btn {
+    white-space: nowrap;
+  }
+
+  .search-container input {
+    max-width: 100%;
+  }
+
+  .product-form-container {
+    padding: 22px;
+  }
+
+  .product-table-container th,
+  .product-table-container td {
+    padding: 13px 14px;
+  }
+
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+  .products-page {
+    padding: 20px 15px 35px;
+  }
+
+  .products-header {
+    flex-direction: column;
+
+    align-items: stretch;
+
+    margin-bottom: 22px;
+  }
+
+  .products-header h1 {
+    font-size: 22px;
+  }
+
+  .products-header p {
+    font-size: 12px;
+  }
+
+  .add-product-btn {
+    width: 100%;
+  }
+
+  .search-container {
+    margin-bottom: 18px;
+  }
+
+  .product-form-container {
+    padding: 19px;
+  }
+
+  .product-form-container h2 {
+    font-size: 18px;
+  }
+
+  .form-buttons {
+    flex-direction: column;
+
+    align-items: stretch;
+  }
+
+  .save-product-btn,
+  .cancel-btn {
+    width: 100%;
+  }
+
+  .product-table-container {
+    border-radius: 11px;
+  }
+
+}
+
+/* =========================================================
+   VERY SMALL MOBILE
+   ========================================================= */
+
+@media (max-width: 400px) {
+
+  .products-page {
+    padding: 16px 12px 30px;
+  }
+
+  .products-header h1 {
+    font-size: 20px;
+  }
+
+  .product-form-container {
+    padding: 16px;
+  }
+
+}

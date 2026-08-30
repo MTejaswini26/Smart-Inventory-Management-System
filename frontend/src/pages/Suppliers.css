@@ -1,0 +1,477 @@
+/* =========================================================
+   SUPPLIERS PAGE - PROFESSIONAL UI
+   Smart Inventory Management System
+   ========================================================= */
+
+.suppliers-page {
+  min-height: 100vh;
+  padding: 35px 40px;
+  background: #f5f7fb;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #1e293b;
+  box-sizing: border-box;
+}
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.suppliers-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+  gap: 20px;
+}
+
+.suppliers-header h1 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 700;
+  color: #172033;
+  letter-spacing: -0.5px;
+}
+
+.suppliers-header p {
+  margin: 7px 0 0;
+  font-size: 14px;
+  color: #64748b;
+}
+
+/* Header buttons container */
+.suppliers-header > div:last-child {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* =========================================================
+   ADD SUPPLIER BUTTON
+   ========================================================= */
+
+.supplier-add-btn {
+  border: none;
+  outline: none;
+  padding: 12px 20px;
+  background: #2563eb;
+  color: white;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.18);
+}
+
+.supplier-add-btn:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(37, 99, 235, 0.25);
+}
+
+/* =========================================================
+   DASHBOARD BACK BUTTON
+   ========================================================= */
+
+.supplier-back-btn {
+  padding: 11px 17px;
+  border: 1px solid #d7dee9;
+  background: white;
+  color: #475569;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.supplier-back-btn:hover {
+  background: #f8fafc;
+  border-color: #b9c4d4;
+  color: #1e293b;
+}
+
+/* =========================================================
+   SUPPLIER FORM
+   ========================================================= */
+
+.supplier-form {
+  background: white;
+  border: 1px solid #e5eaf1;
+  border-radius: 12px;
+  padding: 26px 28px;
+  margin-bottom: 25px;
+  box-shadow: 0 5px 18px rgba(15, 23, 42, 0.06);
+  animation: supplierFormOpen 0.2s ease;
+}
+
+@keyframes supplierFormOpen {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.supplier-form h2 {
+  margin: 0 0 22px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #172033;
+}
+
+/* =========================================================
+   FORM GROUP
+   ========================================================= */
+
+.supplier-form form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 22px;
+}
+
+.supplier-form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.supplier-form-group label {
+  margin-bottom: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.supplier-form-group input {
+  width: 100%;
+  height: 44px;
+  padding: 0 13px;
+  border: 1px solid #d7dee9;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #1e293b;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.supplier-form-group input::placeholder {
+  color: #94a3b8;
+}
+
+.supplier-form-group input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
+}
+
+/* =========================================================
+   FORM BUTTONS
+   ========================================================= */
+
+.supplier-form-buttons {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  margin-top: 5px;
+}
+
+.supplier-save-btn {
+  min-width: 125px;
+  padding: 11px 18px;
+  border: none;
+  border-radius: 7px;
+  background: #2563eb;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.supplier-save-btn:hover {
+  background: #1d4ed8;
+}
+
+.supplier-cancel-btn {
+  min-width: 90px;
+  padding: 10px 18px;
+  border: 1px solid #d7dee9;
+  border-radius: 7px;
+  background: white;
+  color: #475569;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.supplier-cancel-btn:hover {
+  background: #f8fafc;
+  border-color: #b9c4d4;
+}
+
+/* =========================================================
+   SEARCH SECTION
+   ========================================================= */
+
+.supplier-search {
+  background: white;
+  border: 1px solid #e5eaf1;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
+}
+
+.supplier-search input {
+  width: 100%;
+  height: 44px;
+  padding: 0 15px;
+  border: 1px solid #d7dee9;
+  border-radius: 7px;
+  background: #f8fafc;
+  color: #1e293b;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.supplier-search input::placeholder {
+  color: #94a3b8;
+}
+
+.supplier-search input:focus {
+  background: white;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
+}
+
+/* =========================================================
+   TABLE CONTAINER
+   ========================================================= */
+
+.supplier-table-container {
+  width: 100%;
+  overflow-x: auto;
+  background: white;
+  border: 1px solid #e5eaf1;
+  border-radius: 12px;
+  box-shadow: 0 5px 18px rgba(15, 23, 42, 0.05);
+}
+
+/* =========================================================
+   TABLE
+   ========================================================= */
+
+.supplier-table-container table {
+  width: 100%;
+  min-width: 850px;
+  border-collapse: collapse;
+}
+
+/* =========================================================
+   TABLE HEADER
+   ========================================================= */
+
+.supplier-table-container thead {
+  background: #f8fafc;
+}
+
+.supplier-table-container th {
+  padding: 15px 18px;
+  border-bottom: 1px solid #e5eaf1;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+}
+
+/* =========================================================
+   TABLE BODY
+   ========================================================= */
+
+.supplier-table-container td {
+  padding: 16px 18px;
+  border-bottom: 1px solid #eef2f6;
+  color: #475569;
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+/* Supplier name */
+.supplier-table-container td:nth-child(2) {
+  color: #172033;
+  font-weight: 600;
+}
+
+/* ID */
+.supplier-table-container td:first-child {
+  color: #64748b;
+  font-weight: 600;
+}
+
+/* Email */
+.supplier-table-container td:nth-child(4) {
+  color: #2563eb;
+}
+
+/* =========================================================
+   TABLE HOVER
+   ========================================================= */
+
+.supplier-table-container tbody tr {
+  transition: background 0.18s ease;
+}
+
+.supplier-table-container tbody tr:hover {
+  background: #f8fbff;
+}
+
+.supplier-table-container tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* =========================================================
+   ACTION BUTTONS
+   ========================================================= */
+
+.supplier-edit-btn,
+.supplier-delete-btn {
+  padding: 7px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-right: 7px;
+}
+
+/* Edit */
+.supplier-edit-btn {
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.supplier-edit-btn:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+/* Delete */
+.supplier-delete-btn {
+  border: 1px solid #fecaca;
+  background: #fff1f2;
+  color: #dc2626;
+}
+
+.supplier-delete-btn:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
+/* =========================================================
+   NO SUPPLIERS MESSAGE
+   ========================================================= */
+
+.supplier-table-container td[colspan="6"] {
+  padding: 55px 20px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* =========================================================
+   RESPONSIVE DESIGN
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+  .suppliers-page {
+    padding: 25px;
+  }
+
+  .suppliers-header {
+    align-items: flex-start;
+  }
+
+  .suppliers-header h1 {
+    font-size: 26px;
+  }
+
+  .suppliers-header > div:last-child {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .supplier-add-btn,
+  .supplier-back-btn {
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 700px) {
+
+  .suppliers-page {
+    padding: 20px 15px;
+  }
+
+  .suppliers-header {
+    flex-direction: column;
+  }
+
+  .suppliers-header > div:last-child {
+    width: 100%;
+    flex-direction: row;
+  }
+
+  .supplier-add-btn,
+  .supplier-back-btn {
+    flex: 1;
+  }
+
+  .supplier-form {
+    padding: 20px;
+  }
+
+  .supplier-form form {
+    grid-template-columns: 1fr;
+  }
+
+  .supplier-form-buttons {
+    justify-content: stretch;
+  }
+
+  .supplier-save-btn,
+  .supplier-cancel-btn {
+    flex: 1;
+  }
+}
+
+@media (max-width: 450px) {
+
+  .suppliers-header > div:last-child {
+    flex-direction: column;
+  }
+
+  .supplier-form-buttons {
+    flex-direction: column;
+  }
+
+  .supplier-save-btn,
+  .supplier-cancel-btn {
+    width: 100%;
+  }
+}

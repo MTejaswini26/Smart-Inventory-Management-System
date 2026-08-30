@@ -1,0 +1,472 @@
+/* =========================================================
+   SALES PAGE - PROFESSIONAL UI
+   Smart Inventory Management System
+   ========================================================= */
+
+.sales-page {
+  min-height: 100vh;
+  padding: 35px 40px;
+  background: #f5f7fb;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #1e293b;
+  box-sizing: border-box;
+}
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.sales-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+  gap: 20px;
+}
+
+.sales-header h1 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 700;
+  color: #172033;
+  letter-spacing: -0.5px;
+}
+
+.sales-header p {
+  margin: 7px 0 0;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.sales-header > div:last-child {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* =========================================================
+   ADD SALE BUTTON
+   ========================================================= */
+
+.sale-add-btn {
+  border: none;
+  outline: none;
+  padding: 12px 20px;
+  background: #2563eb;
+  color: #ffffff;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.18);
+}
+
+.sale-add-btn:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(37, 99, 235, 0.25);
+}
+
+/* =========================================================
+   DASHBOARD BUTTON
+   ========================================================= */
+
+.sale-back-btn {
+  padding: 11px 17px;
+  border: 1px solid #d7dee9;
+  background: #ffffff;
+  color: #475569;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sale-back-btn:hover {
+  background: #f8fafc;
+  border-color: #b9c4d4;
+  color: #1e293b;
+}
+
+/* =========================================================
+   SALE FORM
+   ========================================================= */
+
+.sale-form {
+  background: #ffffff;
+  border: 1px solid #e5eaf1;
+  border-radius: 12px;
+  padding: 26px 28px;
+  margin-bottom: 25px;
+  box-shadow: 0 5px 18px rgba(15, 23, 42, 0.06);
+  animation: saleFormOpen 0.2s ease;
+}
+
+@keyframes saleFormOpen {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sale-form h2 {
+  margin: 0 0 22px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #172033;
+}
+
+/* =========================================================
+   FORM
+   ========================================================= */
+
+.sale-form form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 22px;
+}
+
+.sale-form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.sale-form-group label {
+  margin-bottom: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.sale-form-group input {
+  width: 100%;
+  height: 44px;
+  padding: 0 13px;
+  border: 1px solid #d7dee9;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #1e293b;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.sale-form-group input::placeholder {
+  color: #94a3b8;
+}
+
+.sale-form-group input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
+}
+
+/* =========================================================
+   FORM BUTTONS
+   ========================================================= */
+
+.sale-form-buttons {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  margin-top: 5px;
+}
+
+.sale-save-btn {
+  min-width: 120px;
+  padding: 11px 18px;
+  border: none;
+  border-radius: 7px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sale-save-btn:hover {
+  background: #1d4ed8;
+}
+
+.sale-cancel-btn {
+  min-width: 90px;
+  padding: 10px 18px;
+  border: 1px solid #d7dee9;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #475569;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sale-cancel-btn:hover {
+  background: #f8fafc;
+  border-color: #b9c4d4;
+}
+
+/* =========================================================
+   SEARCH
+   ========================================================= */
+
+.sale-search {
+  background: #ffffff;
+  border: 1px solid #e5eaf1;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
+}
+
+.sale-search input {
+  width: 100%;
+  height: 44px;
+  padding: 0 15px;
+  border: 1px solid #d7dee9;
+  border-radius: 7px;
+  background: #f8fafc;
+  color: #1e293b;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.sale-search input::placeholder {
+  color: #94a3b8;
+}
+
+.sale-search input:focus {
+  background: #ffffff;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
+}
+
+/* =========================================================
+   TABLE
+   ========================================================= */
+
+.sale-table-container {
+  width: 100%;
+  overflow-x: auto;
+  background: #ffffff;
+  border: 1px solid #e5eaf1;
+  border-radius: 12px;
+  box-shadow: 0 5px 18px rgba(15, 23, 42, 0.05);
+}
+
+.sale-table-container table {
+  width: 100%;
+  min-width: 950px;
+  border-collapse: collapse;
+}
+
+/* =========================================================
+   TABLE HEADER
+   ========================================================= */
+
+.sale-table-container thead {
+  background: #f8fafc;
+}
+
+.sale-table-container th {
+  padding: 15px 18px;
+  border-bottom: 1px solid #e5eaf1;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+}
+
+/* =========================================================
+   TABLE BODY
+   ========================================================= */
+
+.sale-table-container td {
+  padding: 16px 18px;
+  border-bottom: 1px solid #eef2f6;
+  color: #475569;
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+.sale-table-container td:first-child {
+  color: #64748b;
+  font-weight: 600;
+}
+
+/* Customer */
+.sale-table-container td:nth-child(2) {
+  color: #172033;
+  font-weight: 600;
+}
+
+/* Product */
+.sale-table-container td:nth-child(3) {
+  color: #172033;
+  font-weight: 600;
+}
+
+/* Quantity */
+.sale-table-container td:nth-child(4) {
+  font-weight: 600;
+}
+
+/* Total */
+.sale-table-container td:nth-child(6) {
+  color: #2563eb;
+  font-weight: 700;
+}
+
+/* Date */
+.sale-table-container td:nth-child(7) {
+  color: #64748b;
+}
+
+/* =========================================================
+   TABLE HOVER
+   ========================================================= */
+
+.sale-table-container tbody tr {
+  transition: background 0.18s ease;
+}
+
+.sale-table-container tbody tr:hover {
+  background: #f8fbff;
+}
+
+.sale-table-container tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* =========================================================
+   EDIT BUTTON
+   ========================================================= */
+
+.sale-edit-btn {
+  padding: 7px 12px;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 7px;
+  transition: all 0.2s ease;
+}
+
+.sale-edit-btn:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+/* =========================================================
+   DELETE BUTTON
+   ========================================================= */
+
+.sale-delete-btn {
+  padding: 7px 12px;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  background: #fff1f2;
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sale-delete-btn:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 900px) {
+  .sales-page {
+    padding: 25px;
+  }
+
+  .sales-header {
+    align-items: flex-start;
+  }
+
+  .sales-header h1 {
+    font-size: 26px;
+  }
+
+  .sales-header > div:last-child {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 700px) {
+  .sales-page {
+    padding: 20px 15px;
+  }
+
+  .sales-header {
+    flex-direction: column;
+  }
+
+  .sales-header > div:last-child {
+    width: 100%;
+    flex-direction: row;
+  }
+
+  .sale-add-btn,
+  .sale-back-btn {
+    flex: 1;
+  }
+
+  .sale-form {
+    padding: 20px;
+  }
+
+  .sale-form form {
+    grid-template-columns: 1fr;
+  }
+
+  .sale-form-buttons {
+    justify-content: stretch;
+  }
+
+  .sale-save-btn,
+  .sale-cancel-btn {
+    flex: 1;
+  }
+}
+
+@media (max-width: 450px) {
+  .sales-header > div:last-child {
+    flex-direction: column;
+  }
+
+  .sale-form-buttons {
+    flex-direction: column;
+  }
+
+  .sale-save-btn,
+  .sale-cancel-btn {
+    width: 100%;
+  }
+}

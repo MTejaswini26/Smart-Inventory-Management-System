@@ -1,0 +1,118 @@
+SMTP sink listening on 127.0.0.1:1025
+[PASS] Flask test server ready on :5002
+Baseline DB counts: {'products': 3, 'sales': 4, 'invoices': 3}
+
+============================== T0: LOGIN ==============================
+[PASS] login admin/admin123 -> 200
+
+========================= T1: AI PREDICTION (3 products) =========================
+[PASS] prediction product 3 (Laptop/substantial) -> 200
+[PASS] product 3: all quantity fields are INTEGER
+[PASS] product 3: hasSalesHistory == True
+[PASS] product 3: expectedSales > 0
+[PASS] product 3: real R^2 calculated (not None)
+    product 3 (Laptop/substantial): {"productName": "Laptop", "averageDailySales": 1, "expectedSales": 1, "remainingStock": 69, "recommendedQuantity": 0, "rSquared": 0.0015, "hasSalesHistory": true, "model": "Average Daily Demand"}
+[PASS] prediction product 6 (Mouse/sparse) -> 200
+[PASS] product 6: all quantity fields are INTEGER
+[PASS] product 6: hasSalesHistory == True
+[PASS] product 6: expectedSales > 0
+[PASS] product 6: real R^2 calculated (not None)
+    product 6 (Mouse/sparse): {"productName": "Mouse", "averageDailySales": 1, "expectedSales": 2, "remainingStock": 6, "recommendedQuantity": 4, "rSquared": 0.0021, "hasSalesHistory": true, "model": "Average Daily Demand"}
+[PASS] prediction product 5 (WirelessKeyboard/none) -> 200
+[PASS] product 5: all quantity fields are INTEGER
+[PASS] product 5: hasSalesHistory == False
+[PASS] product 5: R^2 is N/A (None)
+[PASS] product 5: no-sales note present
+    product 5 (WirelessKeyboard/none): {"productName": "Wireless Keyboard", "averageDailySales": 0, "expectedSales": 0, "remainingStock": 35, "recommendedQuantity": 0, "rSquared": null, "hasSalesHistory": false, "model": "Linear Regression"}
+
+====================== T2: PRODUCTS SEQUENTIAL CODES ======================
+[PASS] GET /api/products -> 200
+[PASS] existing product codes are sequential 1..n
+    codes before: [1, 2, 3]
+[PASS] POST /api/products -> 201
+[PASS] new product received next sequential code
+    new product id=19 code=4
+
+====================== T3: SALE -> INVENTORY -> INVOICE ======================
+[PASS] POST /api/sales (sale 1) -> 201
+[PASS] inventory updated after sale (50 -> 48)
+[PASS] invoice auto-created for sale 1
+[PASS] invoice_number format INV-YYYY-NNNN
+[PASS] invoice field customer == E2E-TEST Customer
+[PASS] invoice field product == E2E-TEST Product
+[PASS] invoice field quantity == 2
+[PASS] invoice unit price == 10
+[PASS] invoice total == 20
+[PASS] invoice_date == sale date
+[PASS] exactly ONE invoice for sale 1 (duplicate protection)
+    invoice 1: INV-2026-0001 (sale_id=18)
+
+====================== T4: SECOND SALE -> UNIQUE NUMBER ======================
+[PASS] POST /api/sales (sale 2) -> 201
+[PASS] invoice auto-created for sale 2
+[PASS] invoice number 2 differs from 1
+[PASS] invoice numbers globally unique
+    invoice 2: INV-2026-0002 (sale_id=19)
+
+==================== T5: RAPID DOUBLE-SUBMIT (2 sales) ====================
+[PASS] both rapid sale submissions handled
+[PASS] rapid submissions: every sale still has exactly one invoice
+[PASS] invoice_number uniqueness across whole table
+    rapid sale results: [(201, 18), (201, 19)]
+
+==================== T6: DELETE PRODUCT -> CODE REUSED ====================
+[PASS] DELETE /api/products -> 200
+[PASS] re-added product takes freed sequential code
+    product B: id=20 code=4 (freed code reused: True)
+
+==================== T7: FORGOT PASSWORD -> REAL EMAIL ====================
+[PASS] POST /api/auth/forgot-password -> 200
+[PASS] no token leaked in API response
+[PASS] email actually sent through SMTP (sink captured 1)
+[PASS] email subject exact
+[PASS] email from = SMTP_FROM
+[PASS] email to = registered address
+[PASS] body contains required sentence
+[PASS] body contains expiry line
+[PASS] body contains ignore notice
+[PASS] body signed Smart Inventory Management System
+[PASS] body contains real reset URL
+    captured reset URL: http://localhost:5173/forgot-password?username=admin&token=In0ADhc6vOVrSEPcmiZV7N2R0yWfjRXa-IoqO0g-G04
+
+==================== T8: RESET LINK WORKS / SECURITY ====================
+[PASS] reset with emailed token -> 200
+[PASS] login with NEW password -> 200
+[PASS] login with OLD password -> 401
+[PASS] token reuse rejected -> 400
+[PASS] invalid token rejected -> 400
+[PASS] password restored to admin123 via email flow
+[PASS] login admin/admin123 works again
+
+==================== T9: UPDATE-EMAIL ENDPOINT ====================
+[PASS] update-email with wrong current password -> 403
+[PASS] update-email with correct password -> 200
+[PASS] email persisted in DB
+
+==================== T10: REGRESSION ALL MODULES ====================
+[PASS] GET /api/auth/me -> 200
+[PASS] GET /api/products -> 200
+[PASS] GET /api/inventory -> 200
+[PASS] GET /api/suppliers -> 200
+[PASS] GET /api/purchases -> 200
+[PASS] GET /api/sales -> 200
+[PASS] GET /api/invoices -> 200
+[PASS] GET /api/low-stock-alerts -> 200
+[PASS] GET /api/procurement-recommendations -> 200
+[PASS] GET /api/reports/summary -> 200
+[PASS] GET /api/reports/sales -> 200
+[PASS] GET /api/reports/purchases -> 200
+[PASS] GET /api/dashboard -> 200
+
+==================== CLEANUP TEST DATA ====================
+[PASS] DB restored to baseline counts
+[PASS] all invoices still have invoice_number
+    after cleanup: {"p": 3, "s": 4, "i": 3, "email": null, "missing_numbers": 0}
+
+==================== SUMMARY ====================
+TOTAL FAILURES: 0
+E2E DONE
