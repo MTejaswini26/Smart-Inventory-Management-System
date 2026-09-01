@@ -3,6 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../api";
 import "./Inventory.css";
 
+// Convert a MySQL product row into the item shape used by the inventory UI
+const mapProductToInventory = (product) => ({
+  id: product.id,
+  name: product.name,
+  category: product.category,
+  price: Number(product.price),
+  quantity: Number(product.stock),
+  minimumStock: Number(product.minimum_stock)
+});
+
 function Inventory() {
   const navigate = useNavigate();
 
@@ -25,16 +35,7 @@ function Inventory() {
 
       const data = await response.json();
 
-      const inventoryData = data.map((product) => ({
-        id: product.id,
-        name: product.name,
-        category: product.category,
-        price: Number(product.price),
-        quantity: Number(product.stock),
-        minimumStock: Number(product.minimum_stock)
-      }));
-
-      setInventory(inventoryData);
+      setInventory(data.map(mapProductToInventory));
 
     } catch (error) {
       console.error("Error fetching inventory:", error);
@@ -48,7 +49,21 @@ function Inventory() {
   // =============================
 
   useEffect(() => {
-    loadInventory();
+    api("/api/products")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to load inventory");
+        }
+
+        return response.json();
+      })
+      .then((data) => {
+        setInventory(data.map(mapProductToInventory));
+      })
+      .catch((error) => {
+        console.error("Error fetching inventory:", error);
+        alert("Failed to load inventory");
+      });
   }, []);
 
 

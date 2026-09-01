@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../api";
 import "./Login.css";
@@ -8,30 +8,24 @@ function ForgotPassword() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const [step, setStep] = useState(1);
-  const [username, setUsername] = useState("");
-  const [token, setToken] = useState("");
+  // The password reset email links back to this page with the username and
+  // the reset token in the query string (?username=...&token=...). When the
+  // user clicks the link, the form is prefilled and opens directly on the
+  // "set a new password" step. The query params are read once here as the
+  // initial state, so no effect is needed to sync them.
+  const emailedToken = searchParams.get("token");
+  const emailedUsername = searchParams.get("username");
+
+  const [step, setStep] = useState(emailedToken ? 2 : 1);
+  const [username, setUsername] = useState(
+    emailedToken ? emailedUsername || "" : ""
+  );
+  const [token, setToken] = useState(emailedToken || "");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
-  // The password reset email links back to this page with the username and
-  // the reset token in the query string (?username=...&token=...). When the
-  // user clicks the link, the form is prefilled and opens directly on the
-  // "set a new password" step.
-  useEffect(() => {
-    const emailedToken = searchParams.get("token");
-    const emailedUsername = searchParams.get("username");
-    if (emailedToken) {
-      if (emailedUsername) {
-        setUsername(emailedUsername);
-      }
-      setToken(emailedToken);
-      setStep(2);
-    }
-  }, [searchParams]);
 
   const handleRequestToken = async (e) => {
     e.preventDefault();

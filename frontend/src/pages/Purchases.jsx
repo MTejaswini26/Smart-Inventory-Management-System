@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api";
+import BillModal from "../components/BillModal";
 import "./Purchases.css";
 function Purchases() {
   const navigate = useNavigate();
@@ -9,6 +10,7 @@ function Purchases() {
   const [showForm, setShowForm] = useState(false);
   const [editPurchase, setEditPurchase] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [purchaseBill, setPurchaseBill] = useState(null);
 
   const [newPurchase, setNewPurchase] = useState({
     supplier: "",
@@ -89,7 +91,12 @@ function Purchases() {
 
       setShowForm(false);
 
-      alert("Purchase added successfully!");
+      // Purchase bill generated from the saved purchase record.
+      if (data.bill) {
+        setPurchaseBill(data.bill);
+      } else {
+        alert("Purchase added successfully!");
+      }
 
     } catch (error) {
       console.error("Error adding purchase:", error);
@@ -191,6 +198,23 @@ function Purchases() {
     } catch (error) {
       console.error("Error deleting purchase:", error);
       alert("Failed to delete purchase");
+    }
+  };
+
+  // VIEW PURCHASE BILL (from database values)
+  const openPurchaseBill = async (purchaseId) => {
+    try {
+      const response = await api(`/api/purchases/${purchaseId}/bill`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to load purchase bill");
+      }
+
+      setPurchaseBill(data.bill);
+    } catch (error) {
+      console.error("Error loading purchase bill:", error);
+      alert("Failed to load purchase bill");
     }
   };
 
@@ -575,6 +599,15 @@ function Purchases() {
                     </button>
 
                     <button
+                      className="purchase-bill-btn"
+                      onClick={() =>
+                        openPurchaseBill(purchase.id)
+                      }
+                    >
+                      Bill
+                    </button>
+
+                    <button
                       className="purchase-delete-btn"
                       onClick={() =>
                         deletePurchase(purchase.id)
@@ -596,6 +629,9 @@ function Purchases() {
         </table>
 
       </div>
+
+      {/* PURCHASE BILL MODAL */}
+      <BillModal bill={purchaseBill} onClose={() => setPurchaseBill(null)} />
 
     </div>
   );

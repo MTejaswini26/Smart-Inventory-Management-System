@@ -70,6 +70,12 @@ def serialize_value(value):
         return float(value)
     if isinstance(value, datetime):
         return value.strftime("%Y-%m-%d")
+    if isinstance(value, timedelta):
+        # TIME() columns come back as timedelta (e.g. bill time).
+        total_seconds = int(value.total_seconds())
+        hours, remainder = divmod(total_seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
     if isinstance(value, date):
         return value.isoformat()
     return value
@@ -257,7 +263,9 @@ def _insert_invoice_with_number(
                         invoice_date,
                     ),
                 )
-                return cursor.lastrowid
+                # Return the id AND the generated number so callers can show
+                # it on the sales bill without an extra query.
+                return cursor.lastrowid, number
             except IntegrityError as exc:
                 if exc.errno == 1062:
                     last_error = exc
@@ -290,6 +298,190 @@ def _next_product_code(cursor):
     while code in used:
         code += 1
     return code
+
+
+# ---------------------------------------------------------------------------
+# Report date-range helpers
+# ---------------------------------------------------------------------------
+
+def _parse_report_date(value):
+    """Parse an optional report date filter value.
+
+    Accepts YYYY-MM-DD (HTML date inputs) and DD-MM-YYYY. Returns a
+    datetime.date, or None when the value is empty or invalid.
+    """
+    if value is None:
+        return None
+    value = str(value).strip()
+    if not value:
+        return None
+    for fmt in ("%Y-%m-%d", "%d-%m-%Y"):
+        try:
+            return datetime.strptime(value, fmt).date()
+        except ValueError:
+            continue
+    return None
+
+
+def _report_range_sql(column, from_date, to_date):
+    """Build a WHERE fragment that selects whole days between two dates.
+
+    The upper bound is exclusive on the NEXT day (col < to_date + INTERVAL
+    1 DAY), so every transaction of the last selected day - 00:00:00 through
+    23:59:59 - is included. This half-open range works identically for DATE
+    and DATETIME columns, so no transactions on the selected dates are missed.
+    """
+    clauses, params = [], []
+    if from_date is not None:
+        clauses.append(f"{column} >= %s")
+        params.append(from_date)
+    if to_date is not None:
+        clauses.append(f"{column} < %s + INTERVAL 1 DAY")
+        params.append(to_date)
+    where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+    return where, tuple(params)
+
+
+def _parse_report_args():
+    """Read and validate the optional from_date/to_date query parameters."""
+    from_date = _parse_report_date(request.args.get("from_date"))
+    to_date = _parse_report_date(request.args.get("to_date"))
+    error = None
+    if (request.args.get("from_date") and from_date is None) or (
+        request.args.get("to_date") and to_date is None
+    ):
+        error = "Invalid date filter. Use YYYY-MM-DD or DD-MM-YYYY."
+    elif from_date and to_date and from_date > to_date:
+        error = "From Date cannot be after To Date."
+    return from_date, to_date, error
+
+
+def _format_money(value):
+    return round(float(value or 0), 2)
+
+
+def _format_time_hms(value):
+    """Format a TIME value (timedelta from raw cursors, or string) as HH:MM:SS."""
+    if isinstance(value, timedelta):
+        total_seconds = int(value.total_seconds())
+        hours, remainder = divmod(total_seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+    if value:
+        return str(value)
+    return None
+
+
+def _format_date_dmy(value):
+    """Format a date value as DD-MM-YYYY for the bills.
+
+    Accepts datetime/date objects (raw cursors) and date strings as they come
+    back from serialize_row ("YYYY-MM-DD"). Returns the input unchanged when
+    it cannot be parsed.
+    """
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value.strftime("%d-%m-%Y")
+    if isinstance(value, date):
+        return value.strftime("%d-%m-%Y")
+    text = str(value)
+    for fmt in ("%Y-%m-%d", "%d-%m-%Y"):
+        try:
+            return datetime.strptime(text[:10], fmt).strftime("%d-%m-%Y")
+        except ValueError:
+            continue
+    return text
+
+
+def _build_sale_bill(
+    *,
+    sale_id,
+    customer,
+    product,
+    quantity,
+    unit_price,
+    total,
+    bill_date,
+    bill_time,
+    payment_method=None,
+    amount_received=None,
+    invoice_number=None,
+):
+    """Build the supermarket-style sales bill payload from database values."""
+    quantity = int(quantity or 0)
+    unit_price = float(unit_price or 0)
+    amount = round(unit_price * quantity, 2)
+    grand_total = _format_money(total) if total is not None else amount
+    received = None
+    change = None
+    if amount_received is not None:
+        received = _format_money(amount_received)
+        change = round(received - grand_total, 2)
+    return {
+        "type": "sale",
+        "title": "SALES INVOICE",
+        "billNumber": invoice_number or f"INV-{sale_id}",
+        "date": bill_date,
+        "time": bill_time,
+        "partyLabel": "Customer",
+        "partyName": customer,
+        "items": [
+            {
+                "name": product,
+                "quantity": quantity,
+                "unitPrice": unit_price,
+                "amount": amount,
+            }
+        ],
+        "subtotal": amount,
+        # Tax/GST and discount are not tracked by this system, so they are
+        # reported as None and simply omitted from the rendered bill.
+        "tax": None,
+        "grandTotal": grand_total,
+        "paymentMethod": payment_method or None,
+        "amountReceived": received,
+        "change": change,
+    }
+
+
+def _build_purchase_bill(
+    *,
+    purchase_id,
+    supplier,
+    product,
+    quantity,
+    unit_price,
+    bill_date,
+    bill_time,
+):
+    """Build the supplier-style purchase bill payload from database values."""
+    quantity = int(quantity or 0)
+    unit_price = float(unit_price or 0)
+    amount = round(unit_price * quantity, 2)
+    return {
+        "type": "purchase",
+        "title": "PURCHASE BILL",
+        "billNumber": f"PUR-{int(purchase_id):04d}",
+        "date": bill_date,
+        "time": bill_time,
+        "partyLabel": "Supplier",
+        "partyName": supplier,
+        "items": [
+            {
+                "name": product,
+                "quantity": quantity,
+                "unitPrice": unit_price,
+                "amount": amount,
+            }
+        ],
+        "subtotal": amount,
+        "tax": None,
+        "grandTotal": amount,
+        # The recorded purchase amount is the money paid to the supplier and
+        # the same value that appears as "Money Paid" in the reports.
+        "amountPaid": amount,
+    }
 
 
 def ensure_schema_upgrades():
@@ -345,6 +537,17 @@ def ensure_schema_upgrades():
             cursor.execute(
                 "UPDATE products SET product_code = %s WHERE id = %s",
                 (_next_product_code(cursor), row["id"]),
+            )
+
+        # ---- sales: optional payment info used on the customer bill ----
+        if not _column_exists(cursor, "sales", "payment_method"):
+            cursor.execute(
+                "ALTER TABLE sales ADD COLUMN payment_method VARCHAR(30) NULL AFTER price"
+            )
+        if not _column_exists(cursor, "sales", "amount_received"):
+            cursor.execute(
+                "ALTER TABLE sales "
+                "ADD COLUMN amount_received DECIMAL(10, 2) NULL AFTER payment_method"
             )
 
         # ---- users: optional email + password reset token support ----
@@ -1027,11 +1230,39 @@ def add_purchase():
             "UPDATE products SET stock = stock + %s WHERE id = %s",
             (quantity, product["id"]),
         )
+        # Read back the stored purchase so the purchase bill is generated from
+        # the actual database values (single consistent record).
+        cursor.execute(
+            """
+            SELECT
+                supplier, product, quantity, price, purchase_date,
+                TIME(COALESCE(created_at, NOW())) AS bill_time
+            FROM purchases
+            WHERE id = %s
+            """,
+            (purchase_id,),
+        )
+        purchase_row = cursor.fetchone() or {}
+
+        bill = _build_purchase_bill(
+            purchase_id=purchase_id,
+            supplier=purchase_row.get("supplier") or supplier,
+            product=purchase_row.get("product") or product["name"],
+            quantity=purchase_row.get("quantity", quantity),
+            unit_price=purchase_row.get("price", float(price or 0)),
+            bill_date=_format_date_dmy(purchase_row.get("purchase_date"))
+            or date.today().strftime("%d-%m-%Y"),
+            bill_time=_format_time_hms(purchase_row.get("bill_time"))
+            or datetime.now().strftime("%H:%M:%S"),
+        )
+
         conn.commit()
+
         return jsonify(
             {
                 "message": "Purchase added and stock increased successfully",
                 "id": purchase_id,
+                "bill": bill,
             }
         ), 201
     except Exception as exc:
@@ -1151,6 +1382,35 @@ def delete_purchase(purchase_id):
         conn.close()
 
 
+@app.get("/api/purchases/<int:purchase_id>/bill")
+@require_auth
+def get_purchase_bill(purchase_id):
+    """Purchase bill for an existing purchase, built from database values."""
+    row = fetch_one(
+        """
+        SELECT
+            id, supplier, product, quantity, price, purchase_date,
+            TIME(COALESCE(created_at, NOW())) AS bill_time
+        FROM purchases
+        WHERE id = %s
+        """,
+        (purchase_id,),
+    )
+    if not row:
+        return jsonify({"message": "Purchase not found"}), 404
+
+    bill = _build_purchase_bill(
+        purchase_id=row["id"],
+        supplier=row["supplier"],
+        product=row["product"],
+        quantity=row["quantity"],
+        unit_price=row["price"],
+        bill_date=_format_date_dmy(row.get("purchase_date")),
+        bill_time=row["bill_time"],
+    )
+    return jsonify({"bill": bill})
+
+
 @app.get("/api/sales")
 @require_auth
 def get_sales():
@@ -1187,15 +1447,38 @@ def add_sale():
             }
         ), 400
 
+    # Optional payment details for the sales bill (backward compatible:
+    # existing clients simply omit them).
+    payment_method = (data.get("payment_method") or "").strip() or None
+    raw_amount_received = data.get("amount_received")
+    try:
+        amount_received = (
+            float(raw_amount_received)
+            if raw_amount_received not in (None, "")
+            else None
+        )
+    except (TypeError, ValueError):
+        amount_received = None
+
     conn = get_conn()
     cursor = conn.cursor(dictionary=True)
     try:
         cursor.execute(
             """
-            INSERT INTO sales (customer, product, quantity, price, sale_date)
-            VALUES (%s, %s, %s, %s, %s)
+            INSERT INTO sales
+                (customer, product, quantity, price, sale_date,
+                 payment_method, amount_received)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
             """,
-            (customer, product["name"], quantity, float(price or 0), sale_date),
+            (
+                customer,
+                product["name"],
+                quantity,
+                float(price or 0),
+                sale_date,
+                payment_method,
+                amount_received,
+            ),
         )
         sale_id = cursor.lastrowid
 
@@ -1227,7 +1510,7 @@ def add_sale():
         # The UNIQUE key on invoices.sale_id guarantees exactly one invoice
         # per sale (duplicate invoice protection).
         unit_price = float(price or 0)
-        invoice_id = _insert_invoice_with_number(
+        invoice_id, invoice_number = _insert_invoice_with_number(
             cursor,
             customer=customer,
             product=product["name"],
@@ -1238,7 +1521,42 @@ def add_sale():
             sale_id=sale_id,
         )
 
+        # Time of the invoice creation (from the database) for the bill.
+        # TIME() is used instead of DATE_FORMAT because the MySQL C extension
+        # does not support "%" escapes inside parameterized SQL text.
+        cursor.execute(
+            """
+            SELECT TIME(created_at) AS bill_time
+            FROM invoices WHERE id = %s
+            """,
+            (invoice_id,),
+        )
+        invoice_time_row = cursor.fetchone()
+        bill_time = _format_time_hms(
+            (invoice_time_row or {}).get("bill_time")
+        ) or datetime.now().strftime("%H:%M:%S")
+
+        parsed_sale_date = _parse_report_date(sale_date)
+        bill = _build_sale_bill(
+            sale_id=sale_id,
+            customer=customer,
+            product=product["name"],
+            quantity=quantity,
+            unit_price=unit_price,
+            total=round(unit_price * quantity, 2),
+            bill_date=(
+                parsed_sale_date.strftime("%d-%m-%Y")
+                if parsed_sale_date
+                else date.today().strftime("%d-%m-%Y")
+            ),
+            bill_time=bill_time,
+            payment_method=payment_method,
+            amount_received=amount_received,
+            invoice_number=invoice_number,
+        )
+
         conn.commit()
+
         return jsonify(
             {
                 "message": (
@@ -1247,6 +1565,8 @@ def add_sale():
                 ),
                 "id": sale_id,
                 "invoice_id": invoice_id,
+                "invoice_number": invoice_number,
+                "bill": bill,
             }
         ), 201
     except Exception as exc:
@@ -1289,6 +1609,19 @@ def update_sale(sale_id):
         return jsonify({"message": "Old product not found"}), 404
 
     old_quantity = int(old["quantity"] or 0)
+
+    # Optional payment details (round-tripped from the sale row so existing
+    # values are preserved when the edit form does not show them).
+    payment_method = (data.get("payment_method") or "").strip() or None
+    raw_amount_received = data.get("amount_received")
+    try:
+        amount_received = (
+            float(raw_amount_received)
+            if raw_amount_received not in (None, "")
+            else None
+        )
+    except (TypeError, ValueError):
+        amount_received = None
 
     conn = get_conn()
     cursor = conn.cursor(dictionary=True)
@@ -1338,7 +1671,8 @@ def update_sale(sale_id):
         cursor.execute(
             """
             UPDATE sales
-            SET customer = %s, product = %s, quantity = %s, price = %s, sale_date = %s
+            SET customer = %s, product = %s, quantity = %s, price = %s,
+                sale_date = %s, payment_method = %s, amount_received = %s
             WHERE id = %s
             """,
             (
@@ -1347,6 +1681,8 @@ def update_sale(sale_id):
                 new_quantity,
                 float(price or 0),
                 sale_date,
+                payment_method,
+                amount_received,
                 sale_id,
             ),
         )
@@ -1421,6 +1757,51 @@ def delete_sale(sale_id):
         conn.close()
 
 
+@app.get("/api/sales/<int:sale_id>/bill")
+@require_auth
+def get_sale_bill(sale_id):
+    """Sales bill for an existing sale, built from database values.
+
+    Reuses the same bill builder as the sale creation endpoint, so the bill
+    always matches the stored sale and its generated invoice.
+    """
+    row = fetch_one(
+        """
+        SELECT
+            s.id, s.customer, s.product, s.quantity, s.price,
+            s.payment_method, s.amount_received, s.sale_date,
+            TIME(COALESCE(s.created_at, NOW())) AS bill_time,
+            i.invoice_number, i.total AS invoice_total
+        FROM sales s
+        LEFT JOIN invoices i ON i.sale_id = s.id
+        WHERE s.id = %s
+        """,
+        (sale_id,),
+    )
+    if not row:
+        return jsonify({"message": "Sale not found"}), 404
+
+    invoice_total = row.get("invoice_total")
+    bill = _build_sale_bill(
+        sale_id=row["id"],
+        customer=row["customer"],
+        product=row["product"],
+        quantity=row["quantity"],
+        unit_price=row["price"],
+        total=(
+            invoice_total
+            if invoice_total is not None
+            else round(float(row["price"] or 0) * int(row["quantity"] or 0), 2)
+        ),
+        bill_date=_format_date_dmy(row.get("sale_date")),
+        bill_time=row["bill_time"],
+        payment_method=row.get("payment_method"),
+        amount_received=row.get("amount_received"),
+        invoice_number=row.get("invoice_number"),
+    )
+    return jsonify({"bill": bill})
+
+
 @app.get("/api/low-stock-alerts")
 @require_auth
 def low_stock_alerts():
@@ -1467,7 +1848,7 @@ def add_invoice():
     try:
         # Manually created invoices keep working; they simply get a unique
         # invoice number generated (they are not linked to any sale).
-        invoice_id = _insert_invoice_with_number(
+        invoice_id, _invoice_number = _insert_invoice_with_number(
             cursor,
             customer=data.get("customer"),
             product=data.get("product"),
@@ -1582,28 +1963,61 @@ def procurement_recommendations():
 @app.get("/api/reports/summary")
 @require_auth
 def reports_summary():
+    """Aggregated report totals for an optional date range.
+
+    All financial totals are computed by the database (SUM over the
+    transactions inside the range), never from frontend values.
+    """
+    from_date, to_date, error = _parse_report_args()
+    if error:
+        return jsonify({"message": error}), 400
+
+    sales_where, sales_params = _report_range_sql("sale_date", from_date, to_date)
+    purchases_where, purchases_params = _report_range_sql(
+        "purchase_date", from_date, to_date
+    )
+
     sales = fetch_one(
-        """
+        f"""
         SELECT
-            COALESCE(SUM(quantity * price), 0) AS totalSales,
-            COALESCE(SUM(quantity), 0) AS itemsSold
+            COUNT(*) AS transactions,
+            COALESCE(SUM(quantity), 0) AS itemsSold,
+            COALESCE(SUM(quantity * price), 0) AS totalSales
         FROM sales
-        """
+        {sales_where}
+        """,
+        sales_params,
     )
     purchases = fetch_one(
-        """
+        f"""
         SELECT
-            COALESCE(SUM(quantity * price), 0) AS totalPurchases,
-            COALESCE(SUM(quantity), 0) AS itemsPurchased
+            COUNT(*) AS transactions,
+            COALESCE(SUM(quantity), 0) AS itemsPurchased,
+            COALESCE(SUM(quantity * price), 0) AS totalPurchases
         FROM purchases
-        """
+        {purchases_where}
+        """,
+        purchases_params,
     )
+
+    total_sales = _format_money(sales["totalSales"] if sales else 0)
+    total_purchases = _format_money(purchases["totalPurchases"] if purchases else 0)
+
     return jsonify(
         {
-            "totalSales": float(sales["totalSales"] if sales else 0),
-            "totalPurchases": float(purchases["totalPurchases"] if purchases else 0),
+            # Backward-compatible keys (existing clients keep working).
+            "totalSales": total_sales,
+            "totalPurchases": total_purchases,
             "itemsSold": float(sales["itemsSold"] if sales else 0),
             "itemsPurchased": float(purchases["itemsPurchased"] if purchases else 0),
+            # Detailed range totals.
+            "salesTransactions": int(sales["transactions"] if sales else 0),
+            "purchasesTransactions": int(
+                purchases["transactions"] if purchases else 0
+            ),
+            # Net cash flow = money received from sales minus money paid for
+            # purchases. This is a cash-flow figure, NOT a profit figure.
+            "netCashFlow": round(total_sales - total_purchases, 2),
         }
     )
 
@@ -1611,14 +2025,27 @@ def reports_summary():
 @app.get("/api/reports/sales")
 @require_auth
 def reports_sales():
+    """Sales transactions for an optional from_date/to_date range.
+
+    The range filter runs in SQL. A single-day report (from_date == to_date)
+    includes the whole day (00:00:00 - 23:59:59) because the upper bound is
+    the start of the next day. Works for DATE and DATETIME columns.
+    """
+    from_date, to_date, error = _parse_report_args()
+    if error:
+        return jsonify({"message": error}), 400
+
+    where, params = _report_range_sql("sale_date", from_date, to_date)
     return jsonify(
         fetch_all(
-            """
+            f"""
             SELECT id, customer, product, quantity, price,
                    (quantity * price) AS amount, sale_date
             FROM sales
+            {where}
             ORDER BY id ASC
-            """
+            """,
+            params,
         )
     )
 
@@ -1626,14 +2053,22 @@ def reports_sales():
 @app.get("/api/reports/purchases")
 @require_auth
 def reports_purchases():
+    """Purchase transactions for an optional from_date/to_date range."""
+    from_date, to_date, error = _parse_report_args()
+    if error:
+        return jsonify({"message": error}), 400
+
+    where, params = _report_range_sql("purchase_date", from_date, to_date)
     return jsonify(
         fetch_all(
-            """
+            f"""
             SELECT id, supplier, product, quantity, price,
                    (quantity * price) AS amount, purchase_date
             FROM purchases
+            {where}
             ORDER BY id ASC
-            """
+            """,
+            params,
         )
     )
 

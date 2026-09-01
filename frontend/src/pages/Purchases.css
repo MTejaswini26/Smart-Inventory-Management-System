@@ -393,6 +393,28 @@
 }
 
 /* =========================================================
+   BILL BUTTON
+   ========================================================= */
+
+.purchase-bill-btn {
+  padding: 7px 12px;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  background: #f0fdf4;
+  color: #16a34a;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 7px;
+  transition: all 0.2s ease;
+}
+
+.purchase-bill-btn:hover {
+  background: #dcfce7;
+  border-color: #86efac;
+}
+
+/* =========================================================
    DELETE BUTTON
    ========================================================= */
 

@@ -1,6 +1,6 @@
 SMTP sink listening on 127.0.0.1:1025
 [PASS] Flask test server ready on :5002
-Baseline DB counts: {'products': 3, 'sales': 4, 'invoices': 3}
+Baseline DB counts: {'products': 3, 'sales': 5, 'invoices': 5}
 
 ============================== T0: LOGIN ==============================
 [PASS] login admin/admin123 -> 200
@@ -11,13 +11,13 @@ Baseline DB counts: {'products': 3, 'sales': 4, 'invoices': 3}
 [PASS] product 3: hasSalesHistory == True
 [PASS] product 3: expectedSales > 0
 [PASS] product 3: real R^2 calculated (not None)
-    product 3 (Laptop/substantial): {"productName": "Laptop", "averageDailySales": 1, "expectedSales": 1, "remainingStock": 69, "recommendedQuantity": 0, "rSquared": 0.0015, "hasSalesHistory": true, "model": "Average Daily Demand"}
+    product 3 (Laptop/substantial): {"productName": "Laptop", "averageDailySales": 1, "expectedSales": 1, "remainingStock": 54, "recommendedQuantity": 0, "rSquared": 0.0, "hasSalesHistory": true, "model": "Linear Regression"}
 [PASS] prediction product 6 (Mouse/sparse) -> 200
 [PASS] product 6: all quantity fields are INTEGER
 [PASS] product 6: hasSalesHistory == True
 [PASS] product 6: expectedSales > 0
 [PASS] product 6: real R^2 calculated (not None)
-    product 6 (Mouse/sparse): {"productName": "Mouse", "averageDailySales": 1, "expectedSales": 2, "remainingStock": 6, "recommendedQuantity": 4, "rSquared": 0.0021, "hasSalesHistory": true, "model": "Average Daily Demand"}
+    product 6 (Mouse/sparse): {"productName": "Mouse", "averageDailySales": 1, "expectedSales": 2, "remainingStock": 6, "recommendedQuantity": 4, "rSquared": 0.0016, "hasSalesHistory": true, "model": "Average Daily Demand"}
 [PASS] prediction product 5 (WirelessKeyboard/none) -> 200
 [PASS] product 5: all quantity fields are INTEGER
 [PASS] product 5: hasSalesHistory == False
@@ -31,7 +31,7 @@ Baseline DB counts: {'products': 3, 'sales': 4, 'invoices': 3}
     codes before: [1, 2, 3]
 [PASS] POST /api/products -> 201
 [PASS] new product received next sequential code
-    new product id=19 code=4
+    new product id=23 code=4
 
 ====================== T3: SALE -> INVENTORY -> INVOICE ======================
 [PASS] POST /api/sales (sale 1) -> 201
@@ -45,25 +45,25 @@ Baseline DB counts: {'products': 3, 'sales': 4, 'invoices': 3}
 [PASS] invoice total == 20
 [PASS] invoice_date == sale date
 [PASS] exactly ONE invoice for sale 1 (duplicate protection)
-    invoice 1: INV-2026-0001 (sale_id=18)
+    invoice 1: INV-2026-0001 (sale_id=36)
 
 ====================== T4: SECOND SALE -> UNIQUE NUMBER ======================
 [PASS] POST /api/sales (sale 2) -> 201
 [PASS] invoice auto-created for sale 2
 [PASS] invoice number 2 differs from 1
 [PASS] invoice numbers globally unique
-    invoice 2: INV-2026-0002 (sale_id=19)
+    invoice 2: INV-2026-0002 (sale_id=37)
 
 ==================== T5: RAPID DOUBLE-SUBMIT (2 sales) ====================
 [PASS] both rapid sale submissions handled
 [PASS] rapid submissions: every sale still has exactly one invoice
 [PASS] invoice_number uniqueness across whole table
-    rapid sale results: [(201, 18), (201, 19)]
+    rapid sale results: [(201, 36), (201, 37)]
 
 ==================== T6: DELETE PRODUCT -> CODE REUSED ====================
 [PASS] DELETE /api/products -> 200
 [PASS] re-added product takes freed sequential code
-    product B: id=20 code=4 (freed code reused: True)
+    product B: id=24 code=4 (freed code reused: True)
 
 ==================== T7: FORGOT PASSWORD -> REAL EMAIL ====================
 [PASS] POST /api/auth/forgot-password -> 200
@@ -77,7 +77,7 @@ Baseline DB counts: {'products': 3, 'sales': 4, 'invoices': 3}
 [PASS] body contains ignore notice
 [PASS] body signed Smart Inventory Management System
 [PASS] body contains real reset URL
-    captured reset URL: http://localhost:5173/forgot-password?username=admin&token=In0ADhc6vOVrSEPcmiZV7N2R0yWfjRXa-IoqO0g-G04
+    captured reset URL: http://localhost:5173/forgot-password?username=admin&token=E8_rUganXc6JZINbQvY3MnXP-SiD0hi9ilFXweK3nGA
 
 ==================== T8: RESET LINK WORKS / SECURITY ====================
 [PASS] reset with emailed token -> 200
@@ -111,7 +111,7 @@ Baseline DB counts: {'products': 3, 'sales': 4, 'invoices': 3}
 ==================== CLEANUP TEST DATA ====================
 [PASS] DB restored to baseline counts
 [PASS] all invoices still have invoice_number
-    after cleanup: {"p": 3, "s": 4, "i": 3, "email": null, "missing_numbers": 0}
+    after cleanup: {"p": 3, "s": 5, "i": 5, "email": null, "missing_numbers": 0}
 
 ==================== SUMMARY ====================
 TOTAL FAILURES: 0

@@ -1,6 +1,6 @@
 import "./Dashboard.css";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -32,6 +32,11 @@ function Dashboard() {
     recommendations: [],
   });
 
+  // Low stock popup (uses the existing /api/low-stock-alerts endpoint).
+  const [lowStockAlerts, setLowStockAlerts] = useState([]);
+  const [showLowStockModal, setShowLowStockModal] = useState(false);
+  const lowStockPopupShown = useRef(false);
+
   useEffect(() => {
     api("/api/dashboard")
       .then((response) => response.json())
@@ -46,6 +51,22 @@ function Dashboard() {
       })
       .catch((error) => {
         console.error("Dashboard API Error:", error);
+      });
+
+    // Check for low-stock products when the dashboard is opened/refreshed.
+    // The popup is shown at most once per dashboard visit (no duplicates).
+    api("/api/low-stock-alerts")
+      .then((response) => response.json())
+      .then((data) => {
+        const alerts = Array.isArray(data) ? data : [];
+        setLowStockAlerts(alerts);
+        if (alerts.length > 0 && !lowStockPopupShown.current) {
+          lowStockPopupShown.current = true;
+          setShowLowStockModal(true);
+        }
+      })
+      .catch((error) => {
+        console.error("Low stock alert check failed:", error);
       });
   }, []);
 
@@ -290,6 +311,82 @@ function Dashboard() {
           </div>
         </section>
       </main>
+
+      {/* LOW STOCK POPUP - shown automatically when the dashboard opens
+          and at least one product is at/below its minimum stock level. */}
+      {showLowStockModal && lowStockAlerts.length > 0 && (
+        <div
+          className="lowstock-modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Low stock alert"
+        >
+          <div className="lowstock-modal">
+            <div className="lowstock-modal-header">
+              <span className="lowstock-modal-icon">⚠️</span>
+              <div>
+                <h3>LOW STOCK ALERT</h3>
+                <p>
+                  {lowStockAlerts.length} product
+                  {lowStockAlerts.length === 1 ? "" : "s"} at or below the
+                  minimum stock level
+                </p>
+              </div>
+            </div>
+
+            <div className="lowstock-modal-list">
+              {lowStockAlerts.map((product) => (
+                <div
+                  key={product.id}
+                  className={
+                    Number(product.stock) <= 0
+                      ? "lowstock-item out"
+                      : "lowstock-item"
+                  }
+                >
+                  <div className="lowstock-item-name">
+                    {product.name}
+                    {Number(product.stock) <= 0 && (
+                      <span className="lowstock-out-tag">Out of Stock</span>
+                    )}
+                  </div>
+                  <div className="lowstock-item-levels">
+                    <span>
+                      Current Stock:{" "}
+                      <strong>{product.stock}</strong>
+                    </span>
+                    <span>
+                      Minimum Stock:{" "}
+                      <strong>{product.minimum_stock}</strong>
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="lowstock-modal-actions">
+              <button
+                type="button"
+                className="lowstock-view-btn"
+                onClick={() => {
+                  setShowLowStockModal(false);
+                  navigate("/inventory");
+                }}
+              >
+                View Inventory
+              </button>
+
+              <button
+                type="button"
+                className="lowstock-close-btn"
+                onClick={() => setShowLowStockModal(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api";
+import BillModal from "../components/BillModal";
 import "./Sales.css";
 function Sales() {
   const navigate = useNavigate();
@@ -10,13 +11,16 @@ function Sales() {
   const [showForm, setShowForm] = useState(false);
   const [editSale, setEditSale] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [saleBill, setSaleBill] = useState(null);
 
   const [newSale, setNewSale] = useState({
     customer: "",
     product: "",
     quantity: "",
     price: "",
-    date: ""
+    date: "",
+    paymentMethod: "",
+    amountReceived: ""
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -54,7 +58,10 @@ function Sales() {
       product: newSale.product,
       quantity: Number(newSale.quantity),
       price: Number(newSale.price),
-      sale_date: newSale.date
+      sale_date: newSale.date,
+      payment_method: newSale.paymentMethod || null,
+      amount_received:
+        newSale.amountReceived === "" ? null : Number(newSale.amountReceived)
     };
 
     try {
@@ -91,16 +98,43 @@ function Sales() {
         product: "",
         quantity: "",
         price: "",
-        date: ""
+        date: "",
+        paymentMethod: "",
+        amountReceived: ""
       });
 
       setShowForm(false);
+
+      // Supermarket-style bill generated from the saved sale/invoice.
+      if (data.bill) {
+        setSaleBill(data.bill);
+      }
 
     } catch (error) {
       console.error("Error adding sale:", error);
       alert("Failed to add sale");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // =========================
+  // VIEW SALE BILL (from database values)
+  // =========================
+
+  const openSaleBill = async (saleId) => {
+    try {
+      const response = await api(`/api/sales/${saleId}/bill`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to load bill");
+      }
+
+      setSaleBill(data.bill);
+    } catch (error) {
+      console.error("Error loading sale bill:", error);
+      alert("Failed to load sale bill");
     }
   };
 
@@ -127,7 +161,12 @@ function Sales() {
       product: editSale.product,
       quantity: Number(editSale.quantity),
       price: Number(editSale.price),
-      sale_date: editSale.date
+      sale_date: editSale.date,
+      payment_method: editSale.payment_method || null,
+      amount_received:
+        editSale.amount_received === "" || editSale.amount_received === null
+          ? null
+          : Number(editSale.amount_received)
     };
 
     try {
@@ -356,6 +395,52 @@ function Sales() {
                   })
                 }
                 required
+              />
+
+            </div>
+
+
+            <div className="sale-form-group">
+
+              <label>Payment Method (optional)</label>
+
+              <select
+                value={newSale.paymentMethod}
+                onChange={(e) =>
+                  setNewSale({
+                    ...newSale,
+                    paymentMethod: e.target.value
+                  })
+                }
+              >
+
+                <option value="">Not specified</option>
+                <option value="Cash">Cash</option>
+                <option value="Card">Card</option>
+                <option value="UPI">UPI</option>
+                <option value="Other">Other</option>
+
+              </select>
+
+            </div>
+
+
+            <div className="sale-form-group">
+
+              <label>Amount Received (optional)</label>
+
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="Enter amount received"
+                value={newSale.amountReceived}
+                onChange={(e) =>
+                  setNewSale({
+                    ...newSale,
+                    amountReceived: e.target.value
+                  })
+                }
               />
 
             </div>
@@ -603,6 +688,13 @@ function Sales() {
                   </button>
 
                   <button
+                    className="sale-bill-btn"
+                    onClick={() => openSaleBill(sale.id)}
+                  >
+                    Bill
+                  </button>
+
+                  <button
                     className="sale-delete-btn"
                     onClick={() => deleteSale(sale.id)}
                   >
@@ -620,6 +712,9 @@ function Sales() {
         </table>
 
       </div>
+
+      {/* SALES BILL MODAL */}
+      <BillModal bill={saleBill} onClose={() => setSaleBill(null)} />
 
     </div>
   );

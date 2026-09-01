@@ -10,36 +10,28 @@ function LowStockAlerts() {
   const [loading, setLoading] = useState(true);
 
   // =============================
-  // LOAD LOW STOCK PRODUCTS
-  // =============================
-
-  const loadAlerts = async () => {
-    try {
-      const response = await api(
-        "/api/low-stock-alerts"
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to load low stock alerts");
-      }
-
-      const data = await response.json();
-
-      setAlerts(data);
-    } catch (error) {
-      console.error("Error loading low stock alerts:", error);
-      alert("Failed to load low stock alerts");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // =============================
   // LOAD WHEN PAGE OPENS
   // =============================
 
   useEffect(() => {
-    loadAlerts();
+    api("/api/low-stock-alerts")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to load low stock alerts");
+        }
+
+        return response.json();
+      })
+      .then((data) => {
+        setAlerts(data);
+      })
+      .catch((error) => {
+        console.error("Error loading low stock alerts:", error);
+        alert("Failed to load low stock alerts");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   // =============================

@@ -398,23 +398,236 @@
 }
 
 /* =========================================================
+   DATE RANGE FILTER
+   ========================================================= */
+
+.reports-filter-card {
+  background: #ffffff;
+  border: 1px solid #e6eaf0;
+  border-radius: 14px;
+  padding: 20px 22px;
+  margin-bottom: 26px;
+  box-shadow: 0 4px 14px rgba(16, 24, 40, 0.06);
+}
+
+.reports-filter-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.reports-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.reports-filter-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #344054;
+}
+
+.reports-filter-field input {
+  border: 1px solid #d8dee9;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #172033;
+  background: #fbfcfe;
+  min-width: 180px;
+}
+
+.reports-filter-field input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.reports-filter-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.filter-apply-btn,
+.filter-reset-btn {
+  border: none;
+  padding: 11px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: 0.2s ease;
+}
+
+.filter-apply-btn {
+  background: #2563eb;
+  color: white;
+}
+
+.filter-apply-btn:hover {
+  background: #1d4ed8;
+}
+
+.filter-reset-btn {
+  background: #eef2f7;
+  color: #344054;
+  border: 1px solid #d8dee9;
+}
+
+.filter-reset-btn:hover {
+  background: #e2e8f0;
+}
+
+.reports-filter-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.preset-btn {
+  border: 1px solid #d8dee9;
+  background: #fbfcfe;
+  color: #344054;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: 0.2s ease;
+}
+
+.preset-btn:hover {
+  background: #eef2f7;
+}
+
+.preset-btn.active {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: white;
+}
+
+.reports-filter-error {
+  margin: 12px 0 0;
+  color: #b42318;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.reports-range-label {
+  margin: 14px 0 0;
+  color: #667085;
+  font-size: 14px;
+}
+
+.reports-range-label strong {
+  color: #172033;
+}
+
+/* =========================================================
+   KPI SUB LABELS + EXTRA CARD ACCENTS (cards 5 and 6)
+   ========================================================= */
+
+.report-kpi-sub {
+  display: block;
+  margin-top: 4px;
+  color: #667085;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.report-period-text {
+  font-size: 18px !important;
+  line-height: 1.3;
+}
+
+.report-kpi-card:nth-child(5)::after {
+  background: #0ea5e9;
+}
+
+.report-kpi-card:nth-child(5) .report-kpi-icon {
+  background: #e0f2fe;
+}
+
+.report-kpi-card:nth-child(6)::after {
+  background: #059669;
+}
+
+.report-kpi-card:nth-child(6) .report-kpi-icon {
+  background: #ecfdf5;
+}
+
+/* =========================================================
+   REPORT TABLE HEADER + PER-TAB TOTALS
+   ========================================================= */
+
+.report-table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.report-table-header h2 {
+  margin: 0;
+  color: #101828;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.report-tab-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.report-tab-summary span {
+  background: #f8fafc;
+  border: 1px solid #e6eaf0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #475467;
+  white-space: nowrap;
+}
+
+.report-tab-summary strong {
+  color: #101828;
+}
+
+/* =========================================================
    PRINT
    ========================================================= */
 
 @media print {
 
   .reports-header-buttons,
-  .report-tabs {
+  .report-tabs,
+  .reports-filter-card {
     display: none;
+  }
+
+  /* Neutralize the app shell so the report fills the paper cleanly and no
+     extra blank pages are produced by viewport-sized containers. */
+  #root {
+    width: auto;
+    min-height: auto;
+    border: none;
   }
 
   .reports-page {
     background: white;
     padding: 0;
+    min-height: auto;
   }
 
   .charts-section {
     grid-template-columns: 1fr 1fr;
+    gap: 14px;
   }
 
   .chart-card,
@@ -422,6 +635,65 @@
   .report-table-container {
     box-shadow: none;
     border: 1px solid #ddd;
+  }
+
+  /* Keep the compact cards together instead of cutting them in half
+     across page breaks. */
+  .chart-card,
+  .report-kpi-card {
+    break-inside: avoid;
+  }
+
+  /* CHARTS: during Chrome's print re-layout, recharts' internal chart width
+     reads as 0, so it refuses to render the chart svg at all and the whole
+     graph disappears. Give the wrapper a real size on paper (recharts
+     measures it to size the chart) and force the chart svg box, which
+     carries inline width/height: 100%. The tiny legend swatch icons use the
+     same .recharts-surface class, so they are explicitly reset to their
+     natural 14x14 size afterwards - otherwise they print as huge black
+     rectangles over the chart. */
+  .chart-card .recharts-wrapper {
+    width: 100% !important;
+  }
+
+  .chart-card .recharts-wrapper .recharts-surface {
+    width: 100% !important;
+    height: 320px !important;
+  }
+
+  .chart-card .recharts-legend-wrapper .recharts-surface {
+    width: auto !important;
+    height: auto !important;
+  }
+
+  /* Fallback for browsers without the beforeprint event, where the charts
+     still use the responsive container: keep its measured width positive so
+     recharts never unmounts the chart. */
+  .chart-card .recharts-responsive-container {
+    min-width: 280px;
+  }
+
+  .chart-card .recharts-responsive-container > div {
+    width: 100% !important;
+    height: 100% !important;
+    overflow: visible !important;
+  }
+
+  /* Let the report table use the full paper width and flow across pages. */
+  .report-table-container {
+    overflow-x: visible;
+  }
+
+  .report-table-container table {
+    min-width: 0;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tr {
+    break-inside: avoid;
   }
 
 }

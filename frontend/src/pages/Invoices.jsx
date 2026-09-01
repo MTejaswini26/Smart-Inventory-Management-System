@@ -44,7 +44,21 @@ function Invoices() {
   };
 
   useEffect(() => {
-    loadInvoices();
+    api("/api/invoices")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to load invoices");
+        }
+
+        return response.json();
+      })
+      .then((data) => {
+        setInvoices(data);
+      })
+      .catch((error) => {
+        console.error("Error fetching invoices:", error);
+        alert("Failed to load invoices");
+      });
   }, []);
 
 
