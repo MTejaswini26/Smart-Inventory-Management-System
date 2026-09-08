@@ -798,6 +798,100 @@ def login():
     )
 
 
+@app.post("/api/auth/register")
+def register():
+    """Create a new user account (register form on the Login page).
+
+    Validates the required fields, email format, password confirmation and
+    duplicate username/email before storing the password securely hashed, so
+    the new account immediately works with the existing login endpoint.
+    """
+    data = request.get_json(silent=True) or {}
+    username = (data.get("username") or "").strip()
+    email = (data.get("email") or "").strip()
+    password = data.get("password") or ""
+    confirm_password = data.get("confirm_password") or ""
+
+    # 1) Required fields.
+    if not username or not email or not password or not confirm_password:
+        return jsonify(
+            {
+                "message": (
+                    "Username, email, password and confirm password "
+                    "are required"
+                )
+            }
+        ), 400
+
+    # 2) Basic username sanity (same field the login endpoint matches on).
+    if len(username) < 3 or len(username) > 100:
+        return jsonify(
+            {"message": "Username must be 3-100 characters long"}
+        ), 400
+
+    # 3) Email format.
+    if not _valid_email(email):
+        return jsonify(
+            {"message": "Please enter a valid email address"}
+        ), 400
+
+    # 4) Password validation + confirmation (6 chars, same minimum the
+    #    reset-password endpoint enforces).
+    if len(password) < 6:
+        return jsonify(
+            {"message": "Password must be at least 6 characters long"}
+        ), 400
+    if password != confirm_password:
+        return jsonify({"message": "Passwords do not match"}), 400
+
+    # 5) Prevent duplicate accounts. Case-insensitive so 'Admin' cannot be
+    #    registered twice, matching the lookups used by login/forgot-password.
+    existing = fetch_one(
+        """
+        SELECT username, email
+        FROM users
+        WHERE LOWER(username) = LOWER(%s)
+           OR (email IS NOT NULL AND LOWER(email) = LOWER(%s))
+        LIMIT 1
+        """,
+        (username, email),
+    )
+    if existing:
+        if (existing.get("username") or "").lower() == username.lower():
+            return jsonify(
+                {"message": "Username already exists. Please choose another one."}
+            ), 409
+        return jsonify(
+            {"message": "Email is already registered. Please use another email."}
+        ), 409
+
+    # 6) Store the new user with a securely hashed password (never plain text).
+    try:
+        execute(
+            """
+            INSERT INTO users (username, email, password_hash)
+            VALUES (%s, %s, %s)
+            """,
+            (username, email, generate_password_hash(password)),
+        )
+    except IntegrityError:
+        # Safety net: the users table has UNIQUE keys on username and email,
+        # so a race between the duplicate check and this insert lands here.
+        return jsonify(
+            {"message": "Username or email already exists"}
+        ), 409
+
+    return jsonify(
+        {
+            "message": (
+                "Registration successful. You can now log in with your "
+                "new account."
+            )
+        }
+    ), 201
+
+
+@app.post("/api/auth/forgot-password")
 @app.post("/api/auth/forgot-password")
 def forgot_password():
     data = request.get_json(silent=True) or {}

@@ -625,6 +625,7 @@ function Reports() {
                     dataKey="amount"
                     name="Amount"
                     fill="#2563eb"
+                    isAnimationActive={!isPrintMode}
                   />
 
                 </BarChart>
@@ -665,6 +666,7 @@ function Reports() {
                     dataKey="quantity"
                     name="Quantity"
                     fill="#16a34a"
+                    isAnimationActive={!isPrintMode}
                   />
 
                 </BarChart>
