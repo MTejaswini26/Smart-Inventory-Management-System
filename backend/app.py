@@ -780,7 +780,12 @@ def login():
         return jsonify({"message": "Username and password are required"}), 400
 
     user = fetch_one(
-        "SELECT id, username, password_hash FROM users WHERE username = %s",
+        """
+        SELECT id, username, password_hash
+        FROM users
+        WHERE LOWER(username) = LOWER(%s)
+        LIMIT 1
+        """,
         (username,),
     )
     if not user or not check_password_hash(user["password_hash"], password):

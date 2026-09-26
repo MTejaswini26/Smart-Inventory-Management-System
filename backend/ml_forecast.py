@@ -14,8 +14,12 @@ def _to_date(value):
     return date.fromisoformat(str(value)[:10])
 
 
-def _daily_series(sales_rows, end_date=None):
-    """Build a continuous daily quantity series from historical sales."""
+def _daily_series(sales_rows):
+    """
+    Build a continuous daily quantity series from historical sales.
+    Spans from the earliest recorded sale date to the latest recorded sale date.
+    Zero-sales days between the first and last sale are accounted for with 0.0.
+    """
     if not sales_rows:
         return [], []
 
@@ -24,24 +28,27 @@ def _daily_series(sales_rows, end_date=None):
         sale_date = _to_date(row.get("sale_date"))
         if not sale_date:
             continue
-        parsed.append((sale_date, float(row.get("quantity") or 0)))
+        try:
+            qty = float(row.get("quantity") or 0)
+        except (ValueError, TypeError):
+            qty = 0.0
+        if qty > 0:
+            parsed.append((sale_date, qty))
 
     if not parsed:
         return [], []
 
-    start = min(item[0] for item in parsed)
-    end = end_date or date.today()
-    if end < start:
-        end = start
-
     totals = {}
-    for sale_date, quantity in parsed:
-        totals[sale_date] = totals.get(sale_date, 0.0) + quantity
+    for sale_date, qty in parsed:
+        totals[sale_date] = totals.get(sale_date, 0.0) + qty
+
+    start_date = min(totals.keys())
+    end_date = max(totals.keys())
 
     dates = []
     quantities = []
-    current = start
-    while current <= end:
+    current = start_date
+    while current <= end_date:
         dates.append(current)
         quantities.append(totals.get(current, 0.0))
         current += timedelta(days=1)
@@ -51,19 +58,18 @@ def _daily_series(sales_rows, end_date=None):
 
 def forecast_demand(sales_rows, current_stock, minimum_stock, days=30):
     """
-    Forecast demand with Linear Regression on daily sales quantities.
+    Forecast inventory demand based on actual historical sales data.
 
-    X = day index from the first sale
-    y = units sold that day (missing days filled with 0)
-    Predicted demand is the sum of non-negative daily predictions
-    for the next `days` days.
+    Answers the core inventory questions:
+    1. How many units are sold per day? (averageDailySales)
+    2. How many units are expected to be sold for the user-entered days? (expectedSales)
+    3. How much stock is currently available? (currentStock)
+    4. How much stock should be purchased? (recommendedQuantity = max(0, expectedSales - currentStock))
 
-    All user-facing quantities are INTEGERs. The rounding method used
-    across every quantity is ceil(): a fractional daily demand means a
-    unit can be needed on some day, so rounding down (round()) would
-    display an unnecessary 0 and under-state replenishment needs. ceil()
-    never under-forecasts and is already the method used for the expected
-    sales and the recommended purchase quantities.
+    For products with no sales history:
+    - averageDailySales: 0
+    - expectedSales: 0
+    - recommendedQuantity: max(0, minimum_stock - current_stock)
     """
     days = max(1, int(days or 30))
     current_stock = float(current_stock or 0)
@@ -75,111 +81,114 @@ def forecast_demand(sales_rows, current_stock, minimum_stock, days=30):
 
     has_history = sample_count > 0 and total_sales > 0
 
-    if sample_count == 0:
+    if not has_history:
         predicted_daily = 0
         expected_sales = 0
         r_squared = None
-        model_used = "Linear Regression"
-        history_note = (
-            "No historical sales found. The model cannot learn a trend yet."
-        )
-    else:
-        x = np.arange(sample_count, dtype=float).reshape(-1, 1)
-        y = np.array(quantities, dtype=float)
+        model_used = "None"
+        history_note = "No historical sales found for this product."
+        remaining_stock = int(round(current_stock))
+        recommended_quantity = max(0, int(round(minimum_stock - current_stock)))
 
-        single_observation = sample_count == 1
-        if single_observation:
-            x = np.array([[0.0], [1.0]])
-            y = np.array([y[0], y[0]], dtype=float)
-
-        model = LinearRegression()
-        model.fit(x, y)
-        # R² needs at least two real daily observations. With a single
-        # observation the duplicated-point fit would report a fake 1.0, so
-        # it is reported as N/A (None) instead of an artificial value.
-        r_squared = None if single_observation else float(model.score(x, y))
-
-        future_x = np.arange(
-            sample_count, sample_count + days, dtype=float
-        ).reshape(-1, 1)
-        future_y = model.predict(future_x)
-        future_y = np.maximum(future_y, 0.0)
-
-        trend_total = float(np.sum(future_y))
-
-        if trend_total > 0:
-            expected_sales = int(np.ceil(trend_total))
-            model_used = "Linear Regression"
-            history_note = (
-                f"Trained on {sample_count} daily sales observations "
-                "using Linear Regression."
+        if current_stock <= 0:
+            status = "Critical"
+            recommendation = (
+                f"No historical sales data found. Stock is empty. Recommend purchasing "
+                f"{recommended_quantity} units to meet the minimum stock level ({int(minimum_stock)} units)."
+            )
+        elif current_stock < minimum_stock:
+            status = "Low Stock"
+            recommendation = (
+                f"No historical sales data found. Current stock ({int(current_stock)}) is below "
+                f"the minimum stock level ({int(minimum_stock)}). Recommend purchasing {recommended_quantity} units."
             )
         else:
-            # The linear trend extrapolates to zero (or negative) demand for the
-            # forecast window. This happens when sales are sparse/intermittent:
-            # the daily series contains long stretches of zero days after the
-            # recorded sales, which forces the regression slope downwards.
-            # Instead of reporting a fake zero prediction, fall back to the
-            # actual average daily demand observed in the historical data
-            # (a level forecast computed purely from real sales records).
-            average_daily = total_sales / sample_count
-            expected_sales = int(np.ceil(average_daily * days))
-            model_used = "Average Daily Demand"
+            status = "Sufficient"
+            recommendation = (
+                f"No historical sales data found. Current stock ({int(current_stock)}) meets "
+                f"the minimum stock level ({int(minimum_stock)}). No purchase required."
+            )
+    else:
+        historical_daily_rate = total_sales / sample_count
+        model_used = "Historical Daily Average"
+        r_squared = None
+
+        distinct_sale_dates = len([q for q in quantities if q > 0])
+        # Use Linear Regression only when sufficient data exists (>= 5 observed days, >= 3 sale dates)
+        if sample_count >= 5 and distinct_sale_dates >= 3:
+            x = np.arange(sample_count, dtype=float).reshape(-1, 1)
+            y = np.array(quantities, dtype=float)
+            model = LinearRegression()
+            model.fit(x, y)
+            score = float(model.score(x, y))
+            r_squared = round(score, 4)
+            slope = float(model.coef_[0])
+
+            future_x = np.arange(sample_count, sample_count + days, dtype=float).reshape(-1, 1)
+            future_y = np.maximum(model.predict(future_x), 0.0)
+            trend_avg = float(np.mean(future_y))
+
+            if slope > 0 and score > 0 and trend_avg > 0:
+                daily_rate = trend_avg
+                model_used = "Linear Regression"
+                history_note = (
+                    f"Forecast based on Linear Regression over {sample_count} observed days (R²: {r_squared})."
+                )
+            else:
+                daily_rate = historical_daily_rate
+                history_note = (
+                    f"Calculated from {int(total_sales)} units sold across {sample_count} observed days."
+                )
+        else:
+            if sample_count >= 2:
+                x = np.arange(sample_count, dtype=float).reshape(-1, 1)
+                y = np.array(quantities, dtype=float)
+                model = LinearRegression().fit(x, y)
+                r_squared = round(float(model.score(x, y)), 4)
+            else:
+                r_squared = 0.0
+
+            daily_rate = historical_daily_rate
             history_note = (
-                f"Linear trend predicts no demand for the next {days} days "
-                f"because recorded sales are sparse ({int(total_sales)} units "
-                f"over {sample_count} days). Using the observed average daily "
-                f"demand ({average_daily:.2f} units/day) from actual sales data "
-                "instead."
+                f"Calculated from {int(total_sales)} units sold across {sample_count} observed days."
             )
 
-        # Integer daily demand: ceil of the integer period total spread over
-        # the prediction window. Guarantees a meaningful non-zero value
-        # whenever real demand is predicted, without faking data.
-        predicted_daily = int(np.ceil(expected_sales / days))
+        predicted_daily = max(1, int(round(daily_rate)))
+        expected_sales = int(predicted_daily * days)
+        recommended_quantity = max(0, int(round(expected_sales - current_stock)))
+        remaining_stock = int(round(current_stock - expected_sales))
 
-    remaining_stock = int(round(current_stock - expected_sales))
-    recommended_quantity = max(
-        0, int(np.ceil(expected_sales + minimum_stock - current_stock))
-    )
-
-    if remaining_stock <= 0:
-        status = "Critical"
-        recommendation = (
-            f"Immediate restocking is required. Purchase {recommended_quantity} "
-            "units to cover predicted demand and the minimum stock buffer."
-        )
-    elif remaining_stock <= minimum_stock:
-        status = "Low Stock"
-        recommendation = (
-            f"Consider ordering additional stock soon. Recommended purchase "
-            f"quantity: {recommended_quantity} units."
-        )
-    else:
-        status = "Sufficient"
-        if recommended_quantity > 0:
+        if current_stock <= 0:
+            status = "Critical"
             recommendation = (
-                "Current stock covers most of the predicted period. "
-                f"Optional top-up quantity: {recommended_quantity} units."
+                f"Stock is depleted. Immediate replenishment of {recommended_quantity} units "
+                f"is required to cover expected demand ({expected_sales} units)."
+            )
+        elif current_stock < expected_sales:
+            status = "Low Stock"
+            recommendation = (
+                f"Current stock ({int(current_stock)} units) is below expected sales ({expected_sales} units). "
+                f"Recommend purchasing {recommended_quantity} units."
             )
         else:
+            status = "Sufficient"
             recommendation = (
-                "Current stock is sufficient for the predicted period. "
-                "No purchase is required."
+                f"Current stock ({int(current_stock)} units) is sufficient for the predicted period "
+                f"(expected sales: {expected_sales} units). No purchase is required."
             )
 
     return {
         "totalSales": int(total_sales),
         "averageDailySales": int(predicted_daily),
-        "predictionDays": days,
+        "predictionDays": int(days),
         "expectedSales": int(expected_sales),
         "remainingStock": int(remaining_stock),
         "recommendedQuantity": int(recommended_quantity),
         "status": status,
         "recommendation": recommendation,
         "model": model_used,
-        "rSquared": None if r_squared is None else round(r_squared, 4),
-        "historyDays": sample_count,
-        "hasSalesHistory": has_history,
+        "rSquared": r_squared,
+        "historyDays": int(sample_count),
+        "hasSalesHistory": bool(has_history),
         "historyNote": history_note,
     }
