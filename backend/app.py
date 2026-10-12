@@ -16,7 +16,7 @@ from urllib.parse import quote
 import jwt
 import mysql.connector
 from dotenv import load_dotenv
-from flask import Flask, g, jsonify, request
+from flask import Flask, g, jsonify, request, send_from_directory
 from flask_cors import CORS
 from mysql.connector import pooling
 from mysql.connector.errors import IntegrityError
@@ -28,6 +28,10 @@ load_dotenv()
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(BASE_DIR)
+FRONTEND_DIST = os.path.join(PROJECT_ROOT, "frontend", "dist")
 
 JWT_SECRET = os.getenv("JWT_SECRET", "smart-inventory-dev-secret")
 JWT_HOURS = int(os.getenv("JWT_EXPIRES_HOURS", "24"))
@@ -47,7 +51,9 @@ SMTP_FROM = os.getenv("SMTP_FROM", "").strip() or SMTP_USERNAME
 # "true" = STARTTLS (port 587), "false" = plain, "ssl" = implicit TLS (port 465).
 SMTP_SECURITY = os.getenv("SMTP_SECURITY", "true").strip().lower()
 # Base URL of the frontend, used to build the password reset link.
-APP_URL = os.getenv("APP_URL", "http://localhost:5173").rstrip("/")
+# Defaults to the Flask-served frontend (no Node.js required). When running
+# the Vite dev server, set APP_URL=http://localhost:5173 in backend/.env.
+APP_URL = os.getenv("APP_URL", "http://localhost:5001").rstrip("/")
 # Optional: email address assigned to the "admin" account at startup when it
 # has no email yet, so the password reset email has a destination.
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "").strip()
@@ -765,7 +771,8 @@ ensure_schema_upgrades()
 ensure_admin_email()
 
 
-@app.get("/")
+@app.get("/api/health")
+@app.get("/api")
 def health():
     return jsonify({"message": "Smart Inventory Backend is running!"})
 
@@ -2250,6 +2257,25 @@ def dashboard():
         }
     )
 
+
+
+# Serve the React frontend for all non-API routes
+@app.get("/")
+@app.get("/<path:path>")
+def serve_spa(path=""):
+    if path.startswith("api/"):
+        return jsonify({"message": "API endpoint not found"}), 404
+    index_file = os.path.join(FRONTEND_DIST, "index.html")
+    if not os.path.isfile(index_file):
+        # Frontend has not been built (no frontend/dist). Return JSON instead
+        # of raising a 404 from send_from_directory so the API still works.
+        if not path:
+            return jsonify({"message": "Smart Inventory Backend is running!"}), 200
+        return jsonify({"message": "API endpoint not found"}), 404
+    full_path = os.path.join(FRONTEND_DIST, path)
+    if path and os.path.isfile(full_path):
+        return send_from_directory(FRONTEND_DIST, path)
+    return send_from_directory(FRONTEND_DIST, "index.html")
 
 if __name__ == "__main__":
     print("======================================")

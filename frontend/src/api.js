@@ -1,4 +1,10 @@
-const API_BASE = "http://localhost:5001";
+// Same-origin by default so the Flask-served build (http://localhost:5001)
+// works without Node/Vite or CORS. When running `npm run dev` on :5173,
+// keep pointing at the Flask API on :5001 for backwards compatibility.
+const API_BASE =
+  typeof window !== "undefined" && window.location.port === "5173"
+    ? "http://localhost:5001"
+    : "";
 
 export function getToken() {
   // "Remember me" logins persist in localStorage; normal logins live only in
