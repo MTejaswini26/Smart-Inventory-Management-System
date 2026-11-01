@@ -8,7 +8,9 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-dist
+# NOTE: dist is intentionally tracked (see root .gitignore) so Flask can serve
+# the built React UI without Node.js/npm on the target computer.
+!dist
 dist-ssr
 *.local
 

@@ -4,5 +4,9 @@ __pycache__/
 .env
 venv/
 .venv/
-dist/
+# NOTE: frontend/dist is intentionally tracked so the React UI can be served
+# by Flask without requiring Node.js/npm on the target computer.
+# backend/dist is still ignored.
+backend/dist/
 build/
+dist_backup/

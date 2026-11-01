@@ -6,6 +6,8 @@ import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
 import Inventory from "./pages/Inventory";
 import Suppliers from "./pages/Suppliers";
+import Customers from "./pages/Customers";
+import VoiceAssistant from "./components/VoiceAssistant/VoiceAssistant";
 import Purchases from "./pages/Purchases";
 import Sales from "./pages/Sales";
 import Invoices from "./pages/Invoices";
@@ -32,6 +34,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Products />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/customers"
+          element={
+            <ProtectedRoute>
+              <Customers />
             </ProtectedRoute>
           }
         />
@@ -67,6 +77,10 @@ function App() {
             </ProtectedRoute>
           }
         />
+        {/* Voice Assistant: global floating widget (floating mic button + chat
+            window). Rendered inside BrowserRouter but OUTSIDE <Routes> so it
+            floats over every page; its fixed bottom-right FAB acts as the
+            visible launcher. */}
         <Route
           path="/invoices"
           element={
@@ -100,6 +114,7 @@ function App() {
           }
         />
       </Routes>
+      <VoiceAssistant />
     </BrowserRouter>
   );
 }

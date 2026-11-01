@@ -107,6 +107,9 @@ function Dashboard() {
           <button className="menu-item" onClick={() => navigate("/invoices")}>
             🧾 Invoices
           </button>
+          <button className="menu-item" onClick={() => navigate("/customers")}>
+            👥 Customers
+          </button>
           <button
             className="menu-item"
             onClick={() => navigate("/ai-stock-prediction")}
