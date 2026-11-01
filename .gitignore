@@ -9,3 +9,4 @@ venv/
 # backend/dist is still ignored.
 backend/dist/
 build/
+dist_backup/

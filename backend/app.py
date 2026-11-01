@@ -152,6 +152,29 @@ def init_auth_table():
     finally:
         cursor.close()
         conn.close()
+def init_customers_table():
+    conn = get_conn()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS customers (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(100) NOT NULL,
+                phone VARCHAR(50) NOT NULL,
+                email VARCHAR(100) NOT NULL,
+                address TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY uq_customers_email (email)
+            )
+            """
+        )
+        conn.commit()
+    finally:
+        cursor.close()
+        conn.close()
+
+
 
 
 def _column_exists(cursor, table, column):
@@ -767,6 +790,7 @@ def prediction_payload(product, days=30):
 
 
 init_auth_table()
+init_customers_table()
 ensure_schema_upgrades()
 ensure_admin_email()
 
@@ -1294,6 +1318,91 @@ def delete_supplier(supplier_id):
     if count == 0:
         return jsonify({"message": "Supplier not found"}), 404
     return jsonify({"message": "Supplier deleted successfully"})
+
+
+# ---------------------------------------------------------------------------
+# CUSTOMERS
+# ---------------------------------------------------------------------------
+@app.get("/api/customers")
+@require_auth
+def get_customers():
+    return jsonify(fetch_all("SELECT * FROM customers ORDER BY id ASC"))
+
+
+@app.post("/api/customers")
+@require_auth
+def add_customer():
+    data = request.get_json(silent=True) or {}
+    name = (data.get("name") or "").strip()
+    phone = (data.get("phone") or "").strip()
+    email = (data.get("email") or "").strip()
+    address = (data.get("address") or "").strip()
+    if not name:
+        return jsonify({"message": "Customer name is required"}), 400
+    if not _valid_email(email):
+        return jsonify({"message": "A valid email is required"}), 400
+    # Unique email is enforced by the UNIQUE KEY on the customers table. If a
+    # customer with the same email already exists, return its id so the UI can
+    # warn the user instead of creating a duplicate.
+    existing = fetch_one("SELECT id FROM customers WHERE email = %s", (email.lower(),))
+    if existing is not None:
+        return jsonify({"id": existing["id"], "existing": True}), 200
+    conn = get_conn()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute(
+            """
+            INSERT INTO customers (name, phone, email, address)
+            VALUES (%s, %s, %s, %s)
+            """,
+            (name, phone, email.lower(), address),
+        )
+        conn.commit()
+        return jsonify({"id": cursor.lastrowid, "existing": False}), 201
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.put("/api/customers/<int:customer_id>")
+@require_auth
+def update_customer(customer_id):
+    data = request.get_json(silent=True) or {}
+    name = (data.get("name") or "").strip()
+    phone = (data.get("phone") or "").strip()
+    email = (data.get("email") or "").strip()
+    address = (data.get("address") or "").strip()
+    if not name:
+        return jsonify({"message": "Customer name is required"}), 400
+    if not _valid_email(email):
+        return jsonify({"message": "A valid email is required"}), 400
+    # The email must stay unique across customers (excluding the row being updated).
+    existing = fetch_one(
+        "SELECT id FROM customers WHERE email = %s AND id != %s",
+        (email.lower(), customer_id),
+    )
+    if existing is not None:
+        return jsonify({"message": "A customer with this email already exists"}), 409
+    _, count = execute(
+        """
+        UPDATE customers
+        SET name = %s, phone = %s, email = %s, address = %s
+        WHERE id = %s
+        """,
+        (name, phone, email.lower(), address, customer_id),
+    )
+    if count == 0:
+        return jsonify({"message": "Customer not found"}), 404
+    return jsonify({"message": "Customer updated successfully"})
+
+
+@app.delete("/api/customers/<int:customer_id>")
+@require_auth
+def delete_customer(customer_id):
+    _, count = execute("DELETE FROM customers WHERE id = %s", (customer_id,))
+    if count == 0:
+        return jsonify({"message": "Customer not found"}), 404
+    return jsonify({"message": "Customer deleted successfully"})
 
 
 @app.get("/api/purchases")
